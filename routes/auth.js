@@ -4,7 +4,15 @@ const { createUserValidator, loginUserValidator } = require("../validators/user.
 const { validationErrorHandler, verifyToken } = require("../middleware/index.js")
 const { createUser, loginUser, googleLogin, handleGoogleLogin } = require("../controllers/user.js")
 
-
+/**
+ * @swagger
+ * /:
+ *   post:
+ *     description: Register user
+ *     responses:
+ *       200:
+ *         description: Return a registered user
+ */
 router.post("/register", createUserValidator, validationErrorHandler, createUser)
 router.post("/login", loginUserValidator, validationErrorHandler, loginUser)
 router.get("/google-login", handleGoogleLogin)

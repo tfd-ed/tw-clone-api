@@ -30,7 +30,9 @@
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
     "passport-oauth2": "^1.8.0",
-    "response-time": "^2.3.2"
+    "response-time": "^2.3.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.4.1"
