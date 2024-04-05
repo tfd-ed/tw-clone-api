@@ -40,14 +40,14 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openapiSpecification,{
 }))
 
 // Serve static files from the 'dist' directory
-// app.use(express.static(path.join(__dirname, 'frontend/dist')));
+app.use(express.static(path.join(__dirname, 'frontend/dist')));
 
 // Route all requests to index.html for Vue routing to handle
 // All routes for API need to put before catch all routes
 // So put `*` at the end
-// app.get('*', (req, res) => {
-//     res.sendFile(path.join(__dirname, 'frontend/dist/index.html'));
-// });
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend/dist/index.html'));
+});
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
