@@ -16,7 +16,11 @@ const getAllTweets = (asyncHandler(async (req, res) => {
 
 const addImage = async (req, res)=>{
     const tweetId = req.params.id
-    const tweet = await tweetModel.findById(tweetId)
+    try{
+        const tweet = await tweetModel.findById(tweetId)
+    }catch (e) {
+        return res.status(400).send(e)
+    }
     try{
         const newFile = new imageModel({
             filename: req.file.filename,
@@ -29,7 +33,7 @@ const addImage = async (req, res)=>{
         const newTweet = await tweet.save()
         return res.status(202).json(newTweet)
     }catch (e) {
-        return res.error(e)
+        return res.status(400).send(e)
     }
 }
 
