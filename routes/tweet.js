@@ -14,12 +14,13 @@ const storage = multer.diskStorage({
 })
 const upload = multer({ storage: storage })
 const { getTweetById, getAllTweets, addImage } = require("../controllers/tweet.js")
+const {validateObjectId} = require('../middleware/index.js')
 
 router.get("/", getAllTweets)
 
-router.get("/:id", getTweetById)
+router.get("/:id", validateObjectId, getTweetById)
 
-router.post("/:id/image", upload.single("image"), addImage)
+router.post("/:id/image", validateObjectId, upload.single("image"), addImage)
 
 
 module.exports = router
