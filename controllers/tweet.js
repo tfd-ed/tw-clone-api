@@ -1,18 +1,38 @@
 const asyncHandler = require('express-async-handler')
 const { tweetModel } = require("../model/tweet.js")
 const {imageModel} = require("../model/image")
-
-
 const getTweetById = (asyncHandler(async (req, res) => {
     const id = req.params.id
     const tweet = await tweetModel.findById(id)
     res.send(tweet)
 }))
 
-const getAllTweets = (asyncHandler(async (req, res) => {
-    const tweets = await tweetModel.find({})
-    res.json(tweets)
-}))
+const getAllTweets = async (req, res, next) => {
+    try {
+      const limit = parseFloat(req.query.limit, 10) || 10;
+      const page = parseInt(req.query.page, 10) || 1;
+      const myCustomLabels = {
+        totalDocs: "itemCount",
+        docs: "results",
+        limit: "perPage",
+        page: "currentPage",
+        nextPage: "next",
+        prevPage: "prev",
+        totalPages: "pageCount",
+        pagingCounter: "slNo",
+        meta: "paginator",
+      };
+      const options = {
+        page: page,
+        limit: limit,
+        customLabels: myCustomLabels,
+      };
+      const tweets = await tweetModel.paginate({}, options);
+      res.status(200).json(tweets);
+    } catch (err) {
+      next(err);
+    }
+  };
 
 const addImage = async (req, res)=>{
     const tweetId = req.params.id
