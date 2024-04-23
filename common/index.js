@@ -24,15 +24,15 @@ const signToken = (id, email, username) => {
 const sendEmail = async (emailOption) => {
     // My use case im using https://app.brevo.com/ SMTP Gateway
     const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_GATEWAY,
-        port: 587,
+        host: process.env.SMTP_SERVER,
+        port: process.env.SMTP_PORT || 587,
         secure: false,
         auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
         },
     })
-    if (!emailOption.to) return 0;
+    if (!emailOption.to) return {error: true, message: 'invalid email option (email receiver not provided)'};
     const sendMail = await transporter.sendMail(emailOption);
     if(sendMail.error) return {error: true, message: error};
     return { message: `Email sent successfully to ${emailOption.to}`, info: sendMail }

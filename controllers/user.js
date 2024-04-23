@@ -5,7 +5,8 @@ const asyncHandler = require("express-async-handler")
 const bcrypt = require('bcrypt')
 const crypto = require('crypto');
 const axios = require("axios")
-const resetPassSendValidation = require('../validators/forgot-password.js')
+const forgotPasswordSendValidate = require('../validators/forgot-password.js')
+const resetPasswordValidate = require('../validators/reset-password.js')
 const { checkIfEmailExist, signToken, sendEmail } = require("../common/index.js")
 
 const getAllUsers = (async (req, res) => {
@@ -108,14 +109,14 @@ const updateById = (asyncHandler(async (req, res) => {
 // forgot password
 const forgotPassword = (asyncHandler(async (req, res) => {
     const { email } = req.body
-    
+
     if (!email) return res.status(401).json({ error: "Email Must be provided!" })
     const emailFounded = await userModel.findOne({ email: email })
     if (!emailFounded) return res.status(401).json({ error: " Email does not exist!" })
-    
+
     // validate request time
-    const resetPassSendValidations = resetPassSendValidation(emailFounded._id)
-    if(resetPassSendValidations.error) res.status(401).json(resetPassSendValidations)
+    const SendValidates = await forgotPasswordSendValidate(emailFounded._id)
+    if (SendValidates.error) res.status(401).json(SendValidates)
     const tokensHex = crypto.randomBytes(64).toString('hex');
     const magicLink = `${process.env.SERVER_URI}/api/auth/reset-password?id=${emailFounded._id}&token=${tokensHex}`
     const emailOption = {
@@ -123,25 +124,59 @@ const forgotPassword = (asyncHandler(async (req, res) => {
         to: emailFounded.email,
         subject: "Reset Your SarPheab Password",
         html: `
-        <div style="padding: 0px 50px; font-family: 'Roboto', Arial; background-color: #ebf2ff;">
-            <h2>Hi, <strong>${emailFounded.username}</strong></h2>
-            <p style="text-align: center;"><h4>You've requested a password reset<h4></p>\n 
-            <p>It looks like someone submitted a request to reset your SarPheab password. There's nothing to do or worry about if it wasn't you. You can keep on keeping on.</p>\n
-            <p>If this was you, <b><a href="${magicLink}" style="color: #2a92ff;">Reset Your Password Here</a></b> and get back into your account</p>
-        </div>
+        <body>
+            <div style="padding:50px; font-family: 'Roboto', Arial; background-color: #ebf2ff;">
+                <h1>Hi, <strong>${emailFounded.username.split(" ").slice(0, 1)}</strong></h1>
+                <h3 style="width: 100%; text-align: center;">You've requested a password reset</h3>
+                <p>It looks like someone submitted a request to reset your SarPheab password. There's nothing to do or worry
+                    about if it wasn't you. You can keep on keeping on.
+                </p>
+                <p>
+                If this was you, <b><a href="${magicLink}" style="color: #2a92ff;">Reset Your Password Here</a></b> and
+                    get back into your account
+                </p>
+            </div>
+        </body>
         `
     }
-    const sendResetPassTokens = await sendEmail(emailOption)
-    if(sendResetPassTokens.error) return res.status(500).json({error: true, message: "Something went wrong! Please try again later."})
+    const sendEmailResetPassTokens = await sendEmail(emailOption)
+    // console.log(sendEmailResetPassTokens)
+    if (sendEmailResetPassTokens.error) return res.status(401).json({ error: true, message: "Something went wrong! Please try again later." })
     const hashedToekn = await bcrypt.hash(tokensHex, 10)
-    let resetPasswordToken = new resetPaswordTokenModel({
-        byUser: emailFounded._id,
-        token: hashedToekn,
-        expireIn: Date.now() + 3600000
-    })
-    const saveResetPasswordToken = await resetPasswordToken.save()
-    if (saveResetPasswordToken) return res.status(200).json({ message: `Password reset successfully, Please Check Your Email ${emailFounded.email}!` })
-    else return res.status(500).json({error: true, message: "Internal Server Error!"})
+    try {
+        let resetPasswordToken = new resetPaswordTokenModel({
+            byUser: emailFounded._id,
+            token: hashedToekn,
+            expireIn: Date.now() + 3600000
+        })
+        const saveResetPasswordToken = await resetPasswordToken.save()
+        if (saveResetPasswordToken) return res.status(200).json({ message: `Password reset successfully, Please Check Your Email ${emailFounded.email}!` })
+    } catch (error) {
+        return res.status(500).json({ error: true, message: "Internal Server Error!", error })
+    }
+}))
+// reset password 
+const resetPassword = (asyncHandler(async (req, res) => {
+    try {
+        // validate request token and user id
+        const tokenValidation = await resetPasswordValidate(req.query)
+        if (tokenValidation.error) return res.status(401).json(tokenValidation)
+        // update user password
+        if (tokenValidation._id) {
+            // TODO: Fix 
+            const updatedPassword = await resetPaswordTokenModel.findByIdAndUpdate(
+                tokenValidation.byUser,
+                updatePassWord,
+                { new: true } // This option returns the modified document rather than the original
+            );
+        } else {
+            res.status(401).json({ error: true, message: 'Something went wrong, Please try again!' })
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: true, message: " Internal Server Error!" })
+    }
+
 }))
 module.exports = {
     getAllUsers,
@@ -153,5 +188,6 @@ module.exports = {
     loginUser,
     googleLogin,
     handleGoogleLogin,
-    forgotPassword
+    forgotPassword,
+    resetPassword
 }
