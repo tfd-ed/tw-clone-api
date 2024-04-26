@@ -5,8 +5,6 @@ const asyncHandler = require("express-async-handler")
 const bcrypt = require('bcrypt')
 const crypto = require('crypto');
 const axios = require("axios")
-const forgotPasswordSendValidate = require('../validators/forgot-password.js')
-const resetPasswordValidate = require('../validators/reset-password.js')
 const { checkIfEmailExist, signToken, sendEmail } = require("../common/index.js")
 
 const getAllUsers = (async (req, res) => {
@@ -109,16 +107,10 @@ const updateById = (asyncHandler(async (req, res) => {
 // forgot password
 const forgotPassword = (asyncHandler(async (req, res) => {
     const { email } = req.body
-
-    if (!email) return res.status(401).json({ error: "Email Must be provided!" })
     const emailFounded = await userModel.findOne({ email: email })
-    if (!emailFounded) return res.status(401).json({ error: " Email does not exist!" })
-
-    // validate request time
-    const SendValidates = await forgotPasswordSendValidate(emailFounded._id)
-    if (SendValidates.error) res.status(401).json(SendValidates)
-    const tokensHex = crypto.randomBytes(64).toString('hex');
-    const magicLink = `${process.env.SERVER_URI}/api/auth/reset-password?id=${emailFounded._id}&token=${tokensHex}`
+    const tokensHex = crypto.randomBytes(32).toString('hex') // 32 randomBytes will be 64 characters
+    const serverRoutes = `${process.env.SERVER_URI}/api/auth/reset-password`
+    const magicLink = `${serverRoutes}?id=${emailFounded._id}&token=${tokensHex}&exp=${Date.now() + 3600000}`
     const emailOption = {
         from: process.env.SMTP_ADMIN_EMAIL,
         to: emailFounded.email,
@@ -127,7 +119,7 @@ const forgotPassword = (asyncHandler(async (req, res) => {
         <body>
             <div style="padding:50px; font-family: 'Roboto', Arial; background-color: #ebf2ff;">
                 <h1>Hi, <strong>${emailFounded.username.split(" ").slice(0, 1)}</strong></h1>
-                <h3 style="width: 100%; text-align: center;">You've requested a password reset</h3>
+                <h3 style="color: #2a92ff; width: 100%; text-align: center; font-size: 20px; text-decoration : underline">You've requested a password reset</h3>
                 <p>It looks like someone submitted a request to reset your SarPheab password. There's nothing to do or worry
                     about if it wasn't you. You can keep on keeping on.
                 </p>
@@ -140,7 +132,6 @@ const forgotPassword = (asyncHandler(async (req, res) => {
         `
     }
     const sendEmailResetPassTokens = await sendEmail(emailOption)
-    // console.log(sendEmailResetPassTokens)
     if (sendEmailResetPassTokens.error) return res.status(401).json({ error: true, message: "Something went wrong! Please try again later." })
     const hashedToekn = await bcrypt.hash(tokensHex, 10)
     try {
@@ -157,18 +148,18 @@ const forgotPassword = (asyncHandler(async (req, res) => {
 }))
 // reset password 
 const resetPassword = (asyncHandler(async (req, res) => {
+    const { token, id } = req.query
     try {
-        // validate request token and user id
-        const tokenValidation = await resetPasswordValidate(req.query)
-        if (tokenValidation.error) return res.status(401).json(tokenValidation)
+        // find token in DB
+        const ifTokenExist = await resetPaswordTokenModel.findOne({ byUser: id })
+        if(!ifTokenExist) return res.status(401).json({error: true, message: "Request token is invalid"})
+        // compare token
+        const tokenIsMatch = await bcrypt.compare(token, ifTokenExist.token)
+        if (!tokenIsMatch) return res.status(401).json({error: true, message: "Request token does not match!"})
+
         // update user password
-        if (tokenValidation._id) {
-            // TODO: Fix 
-            const updatedPassword = await resetPaswordTokenModel.findByIdAndUpdate(
-                tokenValidation.byUser,
-                updatePassWord,
-                { new: true } // This option returns the modified document rather than the original
-            );
+        if (ifTokenExist._id) {
+            res.status(200).json({error : false, user: ifTokenExist})
         } else {
             res.status(401).json({ error: true, message: 'Something went wrong, Please try again!' })
         }
