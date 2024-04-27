@@ -107,10 +107,15 @@ const updateById = (asyncHandler(async (req, res) => {
 // forgot password
 const forgotPassword = (asyncHandler(async (req, res) => {
     const { email } = req.body
+    // find user has in DB user
     const emailFounded = await userModel.findOne({ email: email })
+    // generate token hash string
     const tokensHex = crypto.randomBytes(32).toString('hex') // 32 randomBytes will be 64 characters
+    // server router link (change if login reset password form if intergrate with client-side)
     const serverRoutes = `${process.env.SERVER_URI}/api/auth/reset-password`
+    // create reset passwrod url for user
     const magicLink = `${serverRoutes}?id=${emailFounded._id}&token=${tokensHex}&exp=${Date.now() + 3600000}`
+    // email template
     const emailOption = {
         from: process.env.SMTP_ADMIN_EMAIL,
         to: emailFounded.email,
@@ -131,16 +136,21 @@ const forgotPassword = (asyncHandler(async (req, res) => {
         </body>
         `
     }
+    // Send email to user with nodemailer
     const sendEmailResetPassTokens = await sendEmail(emailOption)
     if (sendEmailResetPassTokens.error) return res.status(401).json({ error: true, message: "Something went wrong! Please try again later." })
+    // encrypt token has for save in DB
     const hashedToekn = await bcrypt.hash(tokensHex, 10)
+    // try save tokens to DB
     try {
         let resetPasswordToken = new resetPaswordTokenModel({
             byUser: emailFounded._id,
             token: hashedToekn,
             expireIn: Date.now() + 3600000
         })
+
         const saveResetPasswordToken = await resetPasswordToken.save()
+        // if save token succeeded
         if (saveResetPasswordToken) return res.status(200).json({ message: `Password reset successfully, Please Check Your Email ${emailFounded.email}!` })
     } catch (error) {
         return res.status(500).json({ error: true, message: "Internal Server Error!", error })
@@ -149,17 +159,25 @@ const forgotPassword = (asyncHandler(async (req, res) => {
 // reset password 
 const resetPassword = (asyncHandler(async (req, res) => {
     const { token, id } = req.query
+    const { password } = req.body
     try {
         // find token in DB
         const ifTokenExist = await resetPaswordTokenModel.findOne({ byUser: id })
-        if(!ifTokenExist) return res.status(401).json({error: true, message: "Request token is invalid"})
-        // compare token
+        if (!ifTokenExist) return res.status(401).json({ error: true, message: "Request token is invalid" })
+        // check compare token
         const tokenIsMatch = await bcrypt.compare(token, ifTokenExist.token)
-        if (!tokenIsMatch) return res.status(401).json({error: true, message: "Request token does not match!"})
-
+        if (!tokenIsMatch) return res.status(401).json({ error: true, message: "Request token does not match!" })
         // update user password
         if (ifTokenExist._id) {
-            res.status(200).json({error : false, user: ifTokenExist})
+            // ecrypt password
+            const hashedPassword = await bcrypt.hash(password, 10)
+            // update new user password
+            const updatedPassword = await userModel.findByIdAndUpdate(id, { password: hashedPassword }, { new: true })
+            // check if update new password was error 
+            if (!updatedPassword) return res.status(401).json({ error: true, message: 'Something went wrong, Please try again!', details: updatedPassword })
+            // clear all tokens for request by current user
+            await resetPaswordTokenModel.deleteMany({ byUser: id })
+            res.status(200).json({ error: false, message: "Password successfully reseted!" })
         } else {
             res.status(401).json({ error: true, message: 'Something went wrong, Please try again!' })
         }
