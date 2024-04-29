@@ -114,7 +114,7 @@ const forgotPassword = (asyncHandler(async (req, res) => {
     // server router link (change if login reset password form if intergrate with client-side)
     const serverRoutes = `${process.env.SERVER_URI}/api/auth/reset-password`
     // create reset passwrod url for user
-    const magicLink = `${serverRoutes}?id=${emailFounded._id}&token=${tokensHex}&exp=${Date.now() + 3600000}`
+    const magicLink = `${serverRoutes}?id=${emailFounded._id}&token=${tokensHex}&exp=${Date.now() + process.env.RESET_PASS_TOKEN_EXPIRED_IN}`
     // email template
     const emailOption = {
         from: process.env.SMTP_ADMIN_EMAIL,
@@ -146,7 +146,7 @@ const forgotPassword = (asyncHandler(async (req, res) => {
         let resetPasswordToken = new resetPaswordTokenModel({
             byUser: emailFounded._id,
             token: hashedToekn,
-            expireIn: Date.now() + 3600000
+            expireIn: Date.now() + process.env.RESET_PASS_TOKEN_EXPIRED_IN
         })
 
         const saveResetPasswordToken = await resetPasswordToken.save()
