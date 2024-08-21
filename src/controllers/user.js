@@ -112,6 +112,7 @@ const forgotPassword = (asyncHandler(async (req, res) => {
     // generate token hash string
     const tokensHex = crypto.randomBytes(32).toString('hex') // 32 randomBytes will be 64 characters
     // server router link (change if login reset password form if intergrate with client-side)
+    console.log(process.env.SERVER_URI)
     const serverRoutes = `${process.env.SERVER_URI}/api/auth/reset-password`
     // create reset passwrod url for user
     const magicLink = `${serverRoutes}?id=${emailFounded._id}&token=${tokensHex}&exp=${Date.now() + process.env.RESET_PASS_TOKEN_EXPIRED_IN}`

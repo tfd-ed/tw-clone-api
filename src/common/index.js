@@ -40,18 +40,23 @@ const signToken = (id, email, username) => {
 const sendEmail = async (emailOption) => {
     // My use case im using https://app.brevo.com/ SMTP Gateway
     const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_SERVER,
+        host: "smtp",
         port: process.env.SMTP_PORT || 587,
         secure: false,
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-        },
+        // Disable auth for testing
+        auth: false,
+        // Enable auth for production
+        // auth: {
+        //     user: process.env.SMTP_USER,
+        //     pass: process.env.SMTP_PASS
+        // },
     })
     if (!emailOption.to) return { error: true, message: 'invalid email option (email receiver not provided)' };
+    console.log("Before Send!")
     const sendMail = await transporter.sendMail(emailOption);
+    console.log("Not Send?")
     if (sendMail.error) return { error: true, message: error };
-    return {error: false,  message: `Email sent successfully to ${emailOption.to}`, info: sendMail }
+    return { error: false, message: `Email sent successfully to ${emailOption.to}`, info: sendMail }
 }
 module.exports = {
     checkIfEmailExist,

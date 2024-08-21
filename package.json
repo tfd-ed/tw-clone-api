@@ -1,11 +1,10 @@
 {
-  "name": "sarpheab-api",
+  "name": "tw-clone-api",
   "version": "1.0.0",
   "description": "Web server using ExpressJS example",
-  "main": "app.js",
   "scripts": {
-    "dev": "nodemon app.js",
-    "generate": "node generate.js",
+    "dev": "nodemon",
+    "generate": "node src/fixture/generate.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "cd frontend && npm install && npm run build"
   },
@@ -36,6 +35,7 @@
     "response-time": "^2.3.2"
   },
   "devDependencies": {
-    "@faker-js/faker": "^8.4.1"
+    "@faker-js/faker": "^8.4.1",
+    "nodemon": "^3.1.4"
   }
 }
