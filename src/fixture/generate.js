@@ -1,10 +1,10 @@
 const { faker } = require('@faker-js/faker');
-const { userModel } = require('./model/user.js')
-const { tweetModel } = require('./model/tweet.js')
+const { userModel } = require('../model/user.js')
+const { tweetModel } = require('../model/tweet.js')
 const users = 10;
 const tweets = 1000;
 
-const dbConnect = require("./db/db.js")
+const dbConnect = require("../db/db.js")
 
 dbConnect().catch((err) => { console.log(err) })
 

@@ -1,0 +1,4 @@
+FROM mongo:7.0.12
+ENV TZ="Asia/Bangkok"
+CMD [ "mongod" ]
+

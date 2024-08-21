@@ -1,7 +1,7 @@
-const { userModel } = require('./model/user.js')
-const { tweetModel } = require('./model/tweet.js')
+const { userModel } = require('../model/user.js')
+const { tweetModel } = require('../model/tweet.js')
 
-const dbConnect = require("./db/db.js")
+const dbConnect = require("../db/db.js")
 
 dbConnect().catch((err) => { console.log(err) })
 

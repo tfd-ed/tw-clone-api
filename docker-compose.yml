@@ -1,0 +1,33 @@
+services:
+  tw-clone-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tw-clone-api
+    volumes:
+      - ./src:/app/src
+      - /app/node_modules
+      - ./uploads:/app/uploads
+      - .env:/app/.env
+    depends_on:
+      - mongodb
+    ports:
+      - "4000:4000"
+    restart: on-failure
+  mongodb:
+    build:
+      context: .
+      dockerfile: Dockerfile-mongo
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodbdata:/data/db
+  smtp:
+    image: mailhog/mailhog
+    container_name: smtp
+    ports:
+      - "1025:1025"  # SMTP port
+      - "8025:8025"  # Web UI port
+volumes:
+  mongodbdata:
