@@ -34,15 +34,15 @@ app.use("/api/users", passport.authenticate('jwt', { session: false }), user)
 app.use("/api/tweets", passport.authenticate('jwt', { session: false }), tweet)
 app.use("/api/auth", auth)
 
-// // Serve static files from the 'dist' directory
-// app.use(express.static(path.join(__dirname, 'frontend/dist')))
+// Serve static files from the 'dist' directory
+app.use(express.static(path.join(__dirname, 'frontend/dist')))
 
-// // Route all requests to index.html for Vue routing to handle
-// // All routes for API need to put before catch all routes
-// // So put `*` at the end
-// app.get('*', (req, res) => {
-//     res.sendFile(path.join(__dirname, 'frontend/dist/index.html'));
-// });
+// Route all requests to index.html for Vue routing to handle
+// All routes for API need to put before catch all routes
+// So put `*` at the end
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend/dist/index.html'));
+})
 
 app.listen(process.env.PORT, () => {
     console.log(`Example app listening on port ${process.env.PORT}`)
