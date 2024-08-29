@@ -1,4 +1,4 @@
-FROM node:18.20.3-slim
+FROM --platform=linux/amd64 node:18.20.3-slim
 WORKDIR /app
 ENV NODE_ENV dev
 COPY package.json yarn.lock ./

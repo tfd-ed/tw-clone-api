@@ -1,8 +1,6 @@
 services:
   tw-clone-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: kimang/tw-clone:v1.0.1
     container_name: tw-clone-api
     volumes:
       - ./src:/app/src
